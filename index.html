@@ -9,194 +9,112 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
     
     <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-        font-family: Arial, sans-serif;
-      }
-      
-      /* Arayüz Konteyneri (Yükleme ve Uyarı Ekranları için) */
+      body { margin: 0; overflow: hidden; font-family: sans-serif; background: #000; }
       #ui-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.9);
-        color: white;
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        padding: 20px;
-        box-sizing: border-box;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.95); z-index: 10000;
+        display: flex; justify-content: center; align-items: center; text-align: center;
       }
-
-      .hidden {
-        display: none !important;
+      .modal {
+        background: #1a1a1a; padding: 30px; border-radius: 20px;
+        max-width: 85%; border: 1px solid #333; color: white;
       }
-
-      .modal-box {
-        background-color: #222;
-        padding: 30px;
-        border-radius: 15px;
-        max-width: 400px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-      }
-
-      .modal-box h2 {
-        margin-top: 0;
-        color: #fff;
-      }
-
-      .modal-box p {
-        font-size: 16px;
-        line-height: 1.5;
-        color: #ccc;
-        margin-bottom: 25px;
-      }
-
+      .hidden { display: none !important; }
       .btn {
-        padding: 12px 24px;
-        font-size: 16px;
-        font-weight: bold;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        margin: 5px;
-        transition: transform 0.1s;
+        padding: 15px 25px; margin: 10px; border: none; border-radius: 10px;
+        font-weight: bold; cursor: pointer; font-size: 16px;
       }
-
-      .btn:active {
-        transform: scale(0.95);
-      }
-
-      .btn-accept {
-        background-color: #34c759;
-        color: white;
-      }
-
-      .btn-reject {
-        background-color: #ff3b30;
-        color: white;
-      }
-      
-      /* Basit bir yükleme animasyonu */
+      #btnAccept { background: #28a745; color: white; }
+      #btnReject { background: #dc3545; color: white; }
       .spinner {
-        border: 4px solid rgba(255, 255, 255, 0.3);
-        border-top: 4px solid #fff;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 20px auto;
+        width: 40px; height: 40px; border: 4px solid #f3f3f3;
+        border-top: 4px solid #28a745; border-radius: 50%;
+        animation: spin 1s linear infinite; margin: 0 auto 15px;
       }
-
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
   </head>
   <body>
-    
+
     <div id="ui-container">
-      
-      <div id="loadingScreen" class="modal-box">
+      <div id="loadingScreen">
         <div class="spinner"></div>
-        <h2>Sistem Yükleniyor...</h2>
-        <p>Lütfen bekleyin, artırılmış gerçeklik deneyimi hazırlanıyor.</p>
+        <p>AR Modülleri Hazırlanıyor...</p>
       </div>
 
-      <div id="warningScreen" class="modal-box hidden">
-        <h2>Yasal Uyarı ve İzinler</h2>
-        <p>Bu Artırılmış Gerçeklik (AR) deneyimini yaşayabilmeniz için <b>kamera kullanımına izin vermeniz zorunludur</b>. Kameranız yalnızca hedeflenen tabloyu tanımak amacıyla anlık olarak kullanılacak olup, hiçbir kişisel veriniz veya görüntünüz kaydedilmeyecektir.</p>
-        <button id="btnAccept" class="btn btn-accept">Kabul Ediyorum</button>
-        <button id="btnReject" class="btn btn-reject">Reddediyorum</button>
+      <div id="warningScreen" class="modal hidden">
+        <h2>⚠️ Önemli Uyarı</h2>
+        <p>Deneyimi başlatmak için kamera izni vermeniz zorunludur. Görüntünüz kaydedilmez, sadece AR takibi için kullanılır.</p>
+        <button id="btnAccept" class="btn">Kabul Ediyorum</button>
+        <button id="btnReject" class="btn">Reddediyorum</button>
       </div>
 
-      <div id="rejectMessage" class="modal-box hidden">
-        <h2>Erişim Reddedildi</h2>
-        <p>Kamera zorunluluğunu kabul etmediğiniz için sistemden çıkarıldınız. Bu deneyimi yaşamak isterseniz sayfayı yenileyerek izinleri kabul edebilirsiniz.</p>
+      <div id="rejectMessage" class="modal hidden">
+        <p>Kamera izni olmadan sistem çalışamaz. Lütfen sayfayı yenileyin.</p>
       </div>
-
     </div>
 
-    <a-scene mindar-image="imageTargetSrc: targets.mind; autoStart: false;" 
-             color-space="sRGB" 
-             renderer="colorManagement: true, physicallyCorrectLights" 
-             vr-mode-ui="enabled: false" 
-             device-orientation-permission-ui="enabled: false">
+    <a-scene 
+      id="mainScene"
+      mindar-image="imageTargetSrc: targets.mind; autoStart: false;" 
+      embedded color-space="sRGB" 
+      renderer="colorManagement: true, physicallyCorrectLights" 
+      vr-mode-ui="enabled: false" 
+      device-orientation-permission-ui="enabled: false">
       
       <a-assets>
-        <video id="monaVideo" src="video1.mp4" preload="auto" loop crossorigin="anonymous" playsinline webkit-playsinline></video>
+        <video id="monaVideo" src="video1.mp4" preload="auto" loop crossorigin="anonymous" playsinline></video>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity mindar-image-target="targetIndex: 0" id="target">
-        <a-video src="#monaVideo" position="0 0 0" height="1.45" width="1" rotation="0 0 0"></a-video>
+        <a-video src="#monaVideo" position="0 0 0" height="1.45" width="1"></a-video>
       </a-entity>
-      
     </a-scene>
 
     <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        const video = document.querySelector('#monaVideo');
-        const target = document.querySelector('#target');
-        const sceneEl = document.querySelector('a-scene');
+      const sceneEl = document.querySelector('a-scene');
+      const uiContainer = document.getElementById('ui-container');
+      const loadingScreen = document.getElementById('loadingScreen');
+      const warningScreen = document.getElementById('warningScreen');
+      const rejectMessage = document.getElementById('rejectMessage');
+      const video = document.querySelector('#monaVideo');
+
+      // Sahne (A-Frame) tamamen yüklendiğinde
+      sceneEl.addEventListener('renderstart', () => {
+        loadingScreen.classList.add('hidden');
+        warningScreen.classList.remove('hidden');
+      });
+
+      // Kabul Et Butonu
+      document.getElementById('btnAccept').addEventListener('click', () => {
+        uiContainer.classList.add('hidden');
         
-        const uiContainer = document.getElementById('ui-container');
-        const loadingScreen = document.getElementById('loadingScreen');
-        const warningScreen = document.getElementById('warningScreen');
-        const rejectMessage = document.getElementById('rejectMessage');
-        
-        const btnAccept = document.getElementById('btnAccept');
-        const btnReject = document.getElementById('btnReject');
-
-        // 1. Simüle Edilmiş Yükleme Süresi (Örn: 2 Saniye sonra uyarı ekranını aç)
-        setTimeout(() => {
-          loadingScreen.classList.add('hidden');
-          warningScreen.classList.remove('hidden');
-        }, 2000);
-
-        // 2. Kabul Edildiğinde
-        btnAccept.addEventListener('click', () => {
-          // Arayüzü tamamen gizle
-          uiContainer.classList.add('hidden');
-          
-          // Mobil cihazlar için video iznini tetikle
-          video.play().then(() => {
-            video.pause(); 
-          }).catch((error) => {
-            console.warn("Video oynatma izni alınamadı:", error);
-          });
-
-          // MindAR sistemini başlat (Kamera izni tarayıcı tarafından BURADA istenecek)
-          sceneEl.systems["mindar-image-system"].start();
-        });
-
-        // 3. Reddedildiğinde
-        btnReject.addEventListener('click', () => {
-          warningScreen.classList.add('hidden');
-          rejectMessage.classList.remove('hidden');
-          // Sistem başlatılmaz, karanlık ekranda ret mesajı ile kalınır.
-        });
-
-        // 4. Kamera tabloyu gördüğünde videoyu başlat
-        target.addEventListener("targetFound", () => {
-          console.log("Tablo Bulundu!");
-          video.play();
-        });
-
-        // 5. Kamera tablodan uzaklaştığında videoyu durdur
-        target.addEventListener("targetLost", () => {
-          console.log("Tablo Kaybedildi!");
+        // Video ses/oynatma kilidini aç
+        video.play().then(() => {
           video.pause();
         });
+
+        // AR Sistemini Başlat
+        const arSystem = sceneEl.systems["mindar-image-system"];
+        if (arSystem) {
+          arSystem.start(); 
+        } else {
+          alert("AR Sistemi henüz hazır değil, lütfen bekleyin.");
+        }
       });
+
+      // Red Et Butonu
+      document.getElementById('btnReject').addEventListener('click', () => {
+        warningScreen.classList.add('hidden');
+        rejectMessage.classList.remove('hidden');
+      });
+
+      // AR Takip Olayları
+      const target = document.querySelector('#target');
+      target.addEventListener("targetFound", () => video.play());
+      target.addEventListener("targetLost", () => video.pause());
     </script>
   </body>
 </html>
